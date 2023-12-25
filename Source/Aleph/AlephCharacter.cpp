@@ -2,12 +2,16 @@
 
 #include "AlephCharacter.h"
 #include "Engine/LocalPlayer.h"
+
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Components/SpotLightComponent.h"
+
 #include "GameFramework/Controller.h"
+#include "imgui.h"
+
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
@@ -35,6 +39,9 @@ AAlephCharacter::AAlephCharacter() {
 	GetCharacterMovement()->BrakingDecelerationWalking = 2000.f;
 	GetCharacterMovement()->BrakingDecelerationFalling = 1500.0f;
 
+	BaseWalkSpeed = GetCharacterMovement()->MaxWalkSpeed;
+	BaseCrouchSpeed = GetCharacterMovement()->MaxWalkSpeedCrouched;
+
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
 	CameraBoom->SetRelativeLocation(FVector(0, 0, 80));
@@ -48,8 +55,43 @@ AAlephCharacter::AAlephCharacter() {
 
 	Flashlight = CreateDefaultSubobject<USpotLightComponent>(TEXT("Flashlight"));
 	Flashlight->SetupAttachment(FindComponentByClass<USkeletalMeshComponent>(), "clavicle_ls");
-	Flashlight->SetRelativeLocation(FVector(5.0f, 20.0f, 135.0f));
+	Flashlight->SetRelativeLocation(FVector(5.0f, 20.0f, -12.0f));
 	Flashlight->SetRelativeRotation(FRotator(0.0f, 0.0f, 90.0f));
+
+	HealthComponent = CreateDefaultSubobject<UHealthComponent>(TEXT("Health"));
+}
+
+void AAlephCharacter::Tick(float DeltaTime) {
+	Super::Tick(DeltaTime); 
+	
+	const FString Name = GetActorNameOrLabel();
+	const FString GameName = FApp::GetProjectName();
+	ImGui::Begin(TCHAR_TO_ANSI(*Name), nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+	ImGui::SliderInt("Current Health", &Health, 1, MaxHealth);
+	ImGui::End();
+
+	if (Health != OldHealth) {
+		OldHealth = Health;
+		HealthComponent->SetHealth(Health);
+	}
+
+	ImGui::Begin(TCHAR_TO_ANSI(*GameName), nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+	ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
+	ImGui::Text("Velocity: %.1f", GetVelocity().Size());
+	ImGui::End();
+}
+
+void AAlephCharacter::BeginJump() {
+	GetCharacterMovement()->JumpZVelocity = GetVelocity().Size() * BaseWalkMultiplier;
+	Jump();
+}
+
+void AAlephCharacter::BeginSprint() {
+	GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed * BaseWalkMultiplier;
+}
+
+void AAlephCharacter::EndSprint() {
+	GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed;
 }
 
 void AAlephCharacter::BeginPlay() {
@@ -60,6 +102,10 @@ void AAlephCharacter::BeginPlay() {
 			Subsystem->AddMappingContext(DefaultMappingContext, 0);
 		}
 	}
+
+	Health = HealthComponent->GetPureHealth();
+	MaxHealth = HealthComponent->GetPureMaxHealth();
+	OldHealth = Health;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -69,8 +115,11 @@ void AAlephCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 	// Set up action bindings
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent)) {
 		// Jumping
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
+		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &AAlephCharacter::BeginJump);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
+
+		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Started, this, &AAlephCharacter::BeginSprint);
+		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &AAlephCharacter::EndSprint);
 
 		// Moving
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AAlephCharacter::Move);
