@@ -30,18 +30,25 @@ class AAlephCharacter : public ACharacter
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true")) UInputMappingContext* DefaultMappingContext;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true")) UInputAction* CrouchAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true")) UInputAction* SprintAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true")) UInputAction* JumpAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true")) UInputAction* MoveAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true")) UInputAction* LookAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Parallax UI", meta = (AllowPrivateAccess = "true")) UMaterialParameterCollection* ParallaxCollection;
 
 public:
 	AAlephCharacter();
 	virtual void Tick(float DeltaTime) override;
 
 	void BeginJump();
+	void BeginCrouch();
+	void EndCrouch();
 	void BeginSprint();
 	void EndSprint();
+
+	void UpdateParallaxUI();
 
 protected:
 	void Move(const FInputActionValue& Value);
@@ -61,6 +68,15 @@ private:
 	float BaseWalkSpeed;
 	float BaseCrouchSpeed;
 	float BaseWalkMultiplier = 2.5f;
+
+	float YawRate;
+	float PitchRate;
+	float YawParallaxOffset;
+	float PitchParallaxOffset;
+	float ParallaxSpeed = 12.0f;
+	FRotator CameraRot;
+	float MinMaxYawRate = 2.0f;
+	float MinMaxPitchRate = 12.0f;
 
 public:
 	/** Returns CameraBoom subobject **/

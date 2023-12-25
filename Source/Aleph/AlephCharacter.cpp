@@ -2,6 +2,7 @@
 
 #include "AlephCharacter.h"
 #include "Engine/LocalPlayer.h"
+#include "UObject/ConstructorHelpers.h"
 
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -10,15 +11,12 @@
 #include "Components/SpotLightComponent.h"
 
 #include "GameFramework/Controller.h"
-#include "imgui.h"
+#include "Kismet/KismetMathLibrary.h"
+#include "Kismet/KismetMaterialLibrary.h"
 
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
-
-
-//////////////////////////////////////////////////////////////////////////
-// AAlephCharacter
 
 AAlephCharacter::AAlephCharacter() {
 	bUseControllerRotationPitch = false;
@@ -29,6 +27,7 @@ AAlephCharacter::AAlephCharacter() {
 
 	// Configure character movement
 	GetCharacterMovement()->bOrientRotationToMovement = true;
+	GetCharacterMovement()->GetNavAgentPropertiesRef().bCanCrouch = true;
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 500.0f, 0.0f);
 
 	GetCharacterMovement()->AirControl = 0.35f;
@@ -55,17 +54,19 @@ AAlephCharacter::AAlephCharacter() {
 
 	Flashlight = CreateDefaultSubobject<USpotLightComponent>(TEXT("Flashlight"));
 	Flashlight->SetupAttachment(FindComponentByClass<USkeletalMeshComponent>(), "clavicle_ls");
-	Flashlight->SetRelativeLocation(FVector(5.0f, 20.0f, -12.0f));
+	Flashlight->SetRelativeLocation(FVector(-0.925f, 20.85f, -12.0f));
 	Flashlight->SetRelativeRotation(FRotator(0.0f, 0.0f, 90.0f));
 
 	HealthComponent = CreateDefaultSubobject<UHealthComponent>(TEXT("Health"));
 }
 
 void AAlephCharacter::Tick(float DeltaTime) {
-	Super::Tick(DeltaTime); 
+	Super::Tick(DeltaTime);
+	UpdateParallaxUI();
 	
 	const FString Name = GetActorNameOrLabel();
 	const FString GameName = FApp::GetProjectName();
+
 	ImGui::Begin(TCHAR_TO_ANSI(*Name), nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 	ImGui::SliderInt("Current Health", &Health, 1, MaxHealth);
 	ImGui::End();
@@ -86,12 +87,35 @@ void AAlephCharacter::BeginJump() {
 	Jump();
 }
 
+void AAlephCharacter::BeginCrouch() {
+	Crouch();
+}
+
+void AAlephCharacter::EndCrouch() {
+	UnCrouch();
+}
+
 void AAlephCharacter::BeginSprint() {
 	GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed * BaseWalkMultiplier;
 }
 
 void AAlephCharacter::EndSprint() {
 	GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed;
+}
+
+void AAlephCharacter::UpdateParallaxUI() {
+	PitchRate = UKismetMathLibrary::FClamp((FollowCamera->GetComponentRotation().Pitch - CameraRot.Pitch) + PitchRate, MinMaxPitchRate * -1.0f, MinMaxPitchRate);
+	YawRate = UKismetMathLibrary::FClamp((FollowCamera->GetComponentRotation().Yaw - CameraRot.Yaw) + YawRate, MinMaxYawRate * -1.0f, MinMaxYawRate);
+	CameraRot = FollowCamera->GetComponentRotation();
+	PitchParallaxOffset = UKismetMathLibrary::FInterpTo(PitchParallaxOffset, PitchRate, GetWorld()->GetDeltaSeconds(), ParallaxSpeed);
+	YawParallaxOffset = UKismetMathLibrary::FInterpTo(YawParallaxOffset, YawRate, GetWorld()->GetDeltaSeconds(), ParallaxSpeed);
+		
+	if (ParallaxCollection != nullptr) {
+		UKismetMaterialLibrary::SetVectorParameterValue(GetWorld(), ParallaxCollection, "Offset", FLinearColor(YawParallaxOffset, PitchParallaxOffset, 0.0f));
+	}
+
+	PitchRate = UKismetMathLibrary::FInterpTo(PitchRate, 0.0f, GetWorld()->GetDeltaSeconds(), ParallaxSpeed);
+	YawRate = UKismetMathLibrary::FInterpTo(YawRate, 0.0f, GetWorld()->GetDeltaSeconds(), ParallaxSpeed);
 }
 
 void AAlephCharacter::BeginPlay() {
@@ -118,13 +142,13 @@ void AAlephCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &AAlephCharacter::BeginJump);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
 
+		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Started, this, &AAlephCharacter::BeginCrouch);
+		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Completed, this, &AAlephCharacter::EndCrouch);
+
 		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Started, this, &AAlephCharacter::BeginSprint);
 		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &AAlephCharacter::EndSprint);
 
-		// Moving
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AAlephCharacter::Move);
-
-		// Looking
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AAlephCharacter::Look);
 	} else {
 		UE_LOG(LogTemp, Error, TEXT("'%s' Failed to find an Enhanced Input component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."), *GetNameSafe(this));
