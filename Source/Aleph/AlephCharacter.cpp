@@ -63,23 +63,6 @@ AAlephCharacter::AAlephCharacter() {
 void AAlephCharacter::Tick(float DeltaTime) {
 	Super::Tick(DeltaTime);
 	UpdateParallaxUI();
-	
-	const FString Name = GetActorNameOrLabel();
-	const FString GameName = FApp::GetProjectName();
-
-	ImGui::Begin(TCHAR_TO_ANSI(*Name), nullptr, ImGuiWindowFlags_AlwaysAutoResize);
-	ImGui::SliderInt("Current Health", &Health, 1, MaxHealth);
-	ImGui::End();
-
-	if (Health != OldHealth) {
-		OldHealth = Health;
-		HealthComponent->SetHealth(Health);
-	}
-
-	ImGui::Begin(TCHAR_TO_ANSI(*GameName), nullptr, ImGuiWindowFlags_AlwaysAutoResize);
-	ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
-	ImGui::Text("Velocity: %.1f", GetVelocity().Size());
-	ImGui::End();
 }
 
 void AAlephCharacter::BeginJump() {
@@ -126,10 +109,6 @@ void AAlephCharacter::BeginPlay() {
 			Subsystem->AddMappingContext(DefaultMappingContext, 0);
 		}
 	}
-
-	Health = HealthComponent->GetPureHealth();
-	MaxHealth = HealthComponent->GetPureMaxHealth();
-	OldHealth = Health;
 }
 
 //////////////////////////////////////////////////////////////////////////

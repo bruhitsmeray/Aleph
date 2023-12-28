@@ -53,11 +53,6 @@ public:
 protected:
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
-
-	// DO NOT USE THIS IN RELEASE
-	int Health;
-	int MaxHealth;
-	int OldHealth;
 			
 
 protected:

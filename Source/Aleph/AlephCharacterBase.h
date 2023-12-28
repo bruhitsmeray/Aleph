@@ -13,27 +13,27 @@ class UPhysicsHandleComponent;
 class UHealthComponent;
 class UStaminaComponent;
 
-UCLASS()
+class UInputMappingContext;
+class UInputAction;
+
+struct FInputActionValue;
+
+UCLASS(config = Game)
 class ALEPH_API AAlephCharacterBase : public ACharacter
 {
 	GENERATED_BODY()
 
-public:
-	AAlephCharacterBase();
-	virtual void Tick(float DeltaTime) override;
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true")) UCameraComponent* Camera;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Components|Flashlight", meta = (AllowPrivateAccess = "true")) USpringArmComponent* SpringArm;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Components") UCameraComponent* Camera;
-	UPROPERTY(BlueprintReadWrite, VisibleAnywhere, Category = "Components|Flashlight") USpringArmComponent* SpringArm;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Components|Flashlight", meta = (AllowPrivateAccess = "true")) USpotLightComponent* InnerLight;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Components|Flashlight", meta = (AllowPrivateAccess = "true")) USpotLightComponent* OuterLight;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Components|Flashlight") USpotLightComponent* InnerLight;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Components|Flashlight") USpotLightComponent* OuterLight;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Components|Interaction", meta = (AllowPrivateAccess = "true")) UPrimitiveComponent* HitComponent;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Components|Interaction", meta = (AllowPrivateAccess = "true")) UPhysicsHandleComponent* PhysicsHandle;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Components|Interaction") UPrimitiveComponent* HitComponent;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Components|Interaction") UPhysicsHandleComponent* PhysicsHandle;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Components") UHealthComponent* HealthComponent;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Components") UStaminaComponent* StaminaComponent;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true")) UHealthComponent* HealthComponent;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true")) UStaminaComponent* StaminaComponent;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true")) UInputMappingContext* DefaultMappingContext;
 
@@ -43,7 +43,17 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true")) UInputAction* MoveAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true")) UInputAction* LookAction;
 
+public:
+	AAlephCharacterBase();
+	virtual void Tick(float DeltaTime) override;
+	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
 protected:
 	virtual void BeginPlay() override;
+
+	// DO NOT USE THIS IN RELEASE
+	int Health;
+	int MaxHealth;
+	int OldHealth;
 
 };

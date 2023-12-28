@@ -63,11 +63,17 @@ AAlephCharacterBase::AAlephCharacterBase() {
 // Called when the game starts or when spawned
 void AAlephCharacterBase::BeginPlay() {
 	Super::BeginPlay();
+/*
 	if (APlayerController* PlayerController = Cast<APlayerController>(Controller)) {
 		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer())) {
 			Subsystem->AddMappingContext(DefaultMappingContext, 0);
 		}
 	}
+*/
+
+	Health = HealthComponent->GetPureHealth();
+	MaxHealth = HealthComponent->GetPureMaxHealth();
+	OldHealth = Health;
 }
 
 // Called every frame
@@ -94,11 +100,11 @@ void AAlephCharacterBase::Tick(float DeltaTime) {
 // Called to bind functionality to input
 void AAlephCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
+/*
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent)) {
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
 	} else {
 		UE_LOG(LogTemp, Error, TEXT("'%s' Failed to find an Enhanced Input component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."), *GetNameSafe(this));
 	}
+*/
 }
 
