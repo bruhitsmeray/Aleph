@@ -1,6 +1,6 @@
 [submodule "Plugins/UnrealImGui"]
 	path = Plugins/UnrealImGui
 	url = https://github.com/benui-dev/UnrealImGui
-[submodule "Plugins/PBCharacterMovement"]
-	path = Plugins/PBCharacterMovement
-	url = https://github.com/ProjectBorealis/PBCharacterMovement.git
+[submodule "Plugins/PBCMovement"]
+	path = Plugins/PBCMovement
+	url = https://github.com/bruhitsmeray/PBCMovement.git

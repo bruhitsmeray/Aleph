@@ -66,6 +66,11 @@ void AAlephCharacter::BeginSprint() {
 void AAlephCharacter::EndSprint() {
 }
 
+void AAlephCharacter::Dash() {
+	SetDashDistance(2.0f);
+	LaunchCharacter(FVector(Camera->GetForwardVector().X * GetDashDistance(), Camera->GetForwardVector().Y * GetDashDistance(), GetActorLocation().Z), false, false);
+}
+
 void AAlephCharacter::UpdateParallaxUI() {
 	PitchRate = UKismetMathLibrary::FClamp((Camera->GetComponentRotation().Pitch - CameraRot.Pitch) + PitchRate, MinMaxPitchRate * -1.0f, MinMaxPitchRate);
 	YawRate = UKismetMathLibrary::FClamp((Camera->GetComponentRotation().Yaw - CameraRot.Yaw) + YawRate, MinMaxYawRate * -1.0f, MinMaxYawRate);
@@ -111,6 +116,5 @@ void AAlephCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &AAlephCharacter::StopJumping);
 	PlayerInputComponent->BindAction("Crouch", IE_Pressed, this, &AAlephCharacter::BeginCrouch);
 	PlayerInputComponent->BindAction("Crouch", IE_Released, this, &AAlephCharacter::EndCrouch);
-	PlayerInputComponent->BindAction("Sprint", IE_Pressed, this, &AAlephCharacter::BeginSprint);
-	PlayerInputComponent->BindAction("Sprint", IE_Released, this, &AAlephCharacter::EndSprint);
+	PlayerInputComponent->BindAction("Sprint", IE_Pressed, this, &AAlephCharacter::Dash);
 }

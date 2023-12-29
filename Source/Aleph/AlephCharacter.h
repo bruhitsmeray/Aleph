@@ -45,6 +45,8 @@ protected:
 	void BeginSprint();
 	void EndSprint();
 
+	void Dash();
+
 	void UpdateParallaxUI();
 	void DisplayImGuiDebugWindow();
 
